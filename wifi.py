@@ -4,24 +4,34 @@ import pickle
 import win32api
 import win32con
 
-dirs = os.path.abspath('.')
-
-file_path = dirs+'/campus_network_data'
+file_name = 'campus_network_data'
 
 print('校园网一键认证')
-if not os.path.exists(file_path):
+if not os.path.exists(file_name):
     print('首次运行请输入登录信息')
     username = input('账号：')
     password = input('密码：')
+
+    file = open(file_name, 'wb')
+    pickle.dump([username, password], file)
+    file.close()
+    win32api.SetFileAttributes(file_name, win32con.FILE_ATTRIBUTE_HIDDEN)
+
 else:
-    win32api.SetFileAttributes(file_path, win32con.FILE_ATTRIBUTE_NORMAL)
-    file = open(file_path, 'rb')
+    win32api.SetFileAttributes(file_name, win32con.FILE_ATTRIBUTE_NORMAL)
+    file = open(file_name, 'rb')
     username, password = pickle.load(file)
     file.close()
+    win32api.SetFileAttributes(file_name, win32con.FILE_ATTRIBUTE_HIDDEN)
 
 while True:
-    data = {'username': username, 'password': password}  # 帐号密码
     login_url = 'http://172.16.251.172:8081/authentication/form'  # 登录地址
+
+    # 帐号密码
+    data = {
+        'username': username,
+        'password': password
+    }
 
     # 登录 header
     login_header = {
@@ -36,6 +46,12 @@ while True:
         print('帐号或密码错误')
         username = input('帐号：')
         password = input('密码：')
+
+        win32api.SetFileAttributes(file_name, win32con.FILE_ATTRIBUTE_NORMAL)
+        file = open(file_name, 'wb')
+        pickle.dump([username, password], file)
+        file.close()
+        win32api.SetFileAttributes(file_name, win32con.FILE_ATTRIBUTE_HIDDEN)
 
     else:
         break
@@ -72,9 +88,4 @@ if code != online_code:
 else:
     print("当前在线")
 
-file = open(file_path, 'wb')
-pickle.dump([username, password], file)
-file.close()
-
-win32api.SetFileAttributes(file_path, win32con.FILE_ATTRIBUTE_HIDDEN)
 os.system("pause")
